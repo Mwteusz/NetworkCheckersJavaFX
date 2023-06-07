@@ -30,13 +30,12 @@ import static com.checkers.utils.ConsoleColors.*;
 public class Client extends Application implements MoveListener {
     private static final double TILE_SIZE = 60;
     private static final int UPDATE_FREQUENCY = 11;
-    private static final double BOARD_WIDTH = TILE_SIZE*8;
     private static String server_ip = "127.0.0.1";
     private static int server_port = 12345;
     static Board board;
     private static ObjectInputStream inputStream;
     private static ObjectOutputStream outputStream;
-    private static Socket server;
+    private Socket server;
     static PlayerID playerID;
     private Stage stage;
     Timer playerTimer = new Timer();
@@ -47,12 +46,17 @@ public class Client extends Application implements MoveListener {
     Label scoreLabel;
     Integer[] scores = new Integer[]{0, 0};
 
+    public Client(String server_ip, int server_port) throws IOException {
+        Client.server_ip = server_ip;
+        Client.server_port = server_port;
+        this.server  = new Socket(server_ip, server_port);
+    }
+
     @Override
     public void start(Stage stage) {
         this.stage = stage;
         setupUI();
         try {
-            server = new Socket(server_ip, server_port);
             System.out.println(GREEN.set("Connection established"));
 
             outputStream = new ObjectOutputStream(server.getOutputStream());
@@ -185,7 +189,7 @@ public class Client extends Application implements MoveListener {
 
     private void disconnect() {
         try {
-            new Packet(PacketType.DISCONNECT).sendPacket(outputStream);
+            new Packet(PacketType.DISCONNECT).sendTo(outputStream);
         } catch (IOException e) {
             System.out.println(RED.set("Server unreachable. ")+e.getMessage());
         }
@@ -205,9 +209,7 @@ public class Client extends Application implements MoveListener {
     }
 
     private void newKing(Packet packet) {
-        Platform.runLater(()->{
-            board.getField(packet.destination).getPiece().promote();
-        });
+        Platform.runLater(()-> board.getField(packet.destination).getPiece().promote());
     }
 
     private void initPlayer(Packet packet) {
@@ -226,7 +228,7 @@ public class Client extends Application implements MoveListener {
     public void inputMove(Board board, Point src, Point dst){
         try {
             if (board.getField(src).getPiece().getState() == playerID) {
-                new Packet(PacketType.MOVE, playerID, src, dst).sendPacket(outputStream);
+                new Packet(PacketType.MOVE, playerID, src, dst).sendTo(outputStream);
             }
         } catch (IOException e) {
             System.out.println(RED.set("Server unreachable. ")+e.getMessage());
@@ -247,6 +249,12 @@ public class Client extends Application implements MoveListener {
     }
 
     public static void main(String[] args) {
-        launch();
+        Platform.runLater(()-> {
+            try {
+                new Client(server_ip,server_port).start(new Stage());
+            } catch (IOException e) {
+                System.out.println("Could not connect to "+server_ip+":"+server_port + ". "+e.getMessage());
+            }
+        });
     }
 }

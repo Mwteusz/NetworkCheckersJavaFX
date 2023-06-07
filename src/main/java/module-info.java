@@ -14,4 +14,5 @@ module com.example.warcaby_odnowa {
     opens com.checkers.network to javafx.fxml;
     exports com.checkers.utils;
     opens com.checkers.utils to javafx.fxml;
+    exports com.checkers;
 }

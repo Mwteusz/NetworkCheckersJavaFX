@@ -35,8 +35,8 @@ public class ClientHandler extends Thread {
     }
 
     private void managePackets(Player player) throws IOException, ClassNotFoundException {
-        new Packet(PacketType.INIT, player.id, whoseTurn).sendPacket(player.outputStream);
-        sendStargingMessage();
+        new Packet(PacketType.INIT, player.id, whoseTurn).sendTo(player.outputStream);
+        sendStartingMessage();
         while (true) {
             try {
                 Packet packet = Packet.receivePacket(player.inputStream);
@@ -46,15 +46,15 @@ public class ClientHandler extends Thread {
                 }
             } catch (InvalidMoveException e) {
                 System.out.println(RED.set("Illegal move. " + e.getMessage()));
-                new Packet(PacketType.EXCEPTION, e.getMessage()).sendPacket(player.outputStream);
+                new Packet(PacketType.EXCEPTION, e.getMessage()).sendTo(player.outputStream);
             }
         }
     }
 
-    private void sendStargingMessage() throws IOException {
+    private void sendStartingMessage() throws IOException {
         try {
-            new Packet(PacketType.MESSAGE, "Connection established").sendPacket(player.outputStream);
-            new Packet(PacketType.MESSAGE, "Opponent joined the game").sendPacket(getEnemy().outputStream);
+            new Packet(PacketType.MESSAGE, "Connection established").sendTo(player.outputStream);
+            new Packet(PacketType.MESSAGE, "Opponent joined the game").sendTo(getEnemy().outputStream);
 
         } catch (NoSuchElementException e){
             System.out.println(e.getMessage());
@@ -63,7 +63,7 @@ public class ClientHandler extends Thread {
 
     private void playerDisconnect() throws IOException {
         if(players.size() == 2)
-            new Packet(PacketType.FINISH_GAME).sendPacket(getEnemy().outputStream);
+            new Packet(PacketType.FINISH_GAME).sendTo(getEnemy().outputStream);
         players.remove(player.id);
         throw new IOException(player.id+" left the game.");
     }
@@ -106,8 +106,8 @@ public class ClientHandler extends Thread {
         Packet enemyPacket = new Packet(PacketType.PLAYER_TURN, player.id, getEnemy().getTimeAccumulated(), player.getTimeAccumulated());
         Packet playerPacket = new Packet(PacketType.ENEMY_TURN, player.id, player.getTimeAccumulated(), getEnemy().getTimeAccumulated());
 
-        enemyPacket.sendPacket(getEnemy().outputStream);
-        playerPacket.sendPacket(player.outputStream);
+        enemyPacket.sendTo(getEnemy().outputStream);
+        playerPacket.sendTo(player.outputStream);
     }
 
     private boolean isInKingsRow(Packet p) {

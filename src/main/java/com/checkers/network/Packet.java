@@ -49,7 +49,7 @@ public class Packet implements Serializable{
         this.startingPlayer = startingPlayer;
     }
 
-    public void sendPacket(ObjectOutputStream output) throws IOException {
+    public void sendTo(ObjectOutputStream output) throws IOException {
         if(output == null)
             throw new IOException("Strumien nie istnieje");
         output.writeObject(this);
